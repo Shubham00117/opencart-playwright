@@ -45,3 +45,16 @@ test('User login test @master @sanity @regression', async () => {
   await homePage.clickMyAccount();
   await homePage.clickLogin();
 
+  //Enter valid credentials and log in
+  await loginPage.setEmail(config.email);
+  await loginPage.setPassword(config.password);
+  await loginPage.clickLogin();
+
+  //alternatevly
+  //await loginPage.login(config.email,config.password);
+
+  //Verify successful login by checking 'My Account' page presence
+  const isLoggedIn = await myAccountPage.isMyAccountPageExists();
+  expect(isLoggedIn).toBeTruthy();
+
+})
