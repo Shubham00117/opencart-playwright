@@ -36,3 +36,12 @@ test.beforeEach(async ({ page }) => {
 test.afterEach(async ({ page }) => {
   await page.close(); // Close browser tab (good practice in local/dev run)
 });
+
+
+test('User login test @master @sanity @regression', async () => {
+
+  //Navigate to Login page via Home page
+
+  await homePage.clickMyAccount();
+  await homePage.clickLogin();
+
