@@ -1,0 +1,8 @@
+I am unable to run the test file at `/Users/shubham_infinity/Desktop/test1/OpenCartPlayWright/tests/Login.spec.ts`.
+
+I have tried the following commands, but they are all blocked in this environment:
+- `npx playwright test /Users/shubham_infinity/Desktop/test1/OpenCartPlayWright/tests/Login.spec.ts`
+- `npm run test:master`
+- `playwright test --grep @master`
+
+Please provide the correct command to execute the test in this environment.
