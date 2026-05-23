@@ -1,8 +1,12 @@
 import { Page, Locator, expect } from '@playwright/test';
 
+/**
+ * RegistrationPage - Page Object for the OpenCart User Registration page.
+ * Handles all registration form interactions and validations.
+ */
 export class RegistrationPage {
     private readonly page: Page;
-    
+
     // Locators using CSS selectors
     private readonly txtFirstname: Locator;
     private readonly txtLastname: Locator;
@@ -13,10 +17,11 @@ export class RegistrationPage {
     private readonly chkdPolicy: Locator;
     private readonly btnContinue: Locator;
     private readonly msgConfirmation: Locator;
+    private readonly chkNewsletter: Locator;
 
     constructor(page: Page) {
         this.page = page;
-        
+
         // Initialize locators with CSS selectors
         this.txtFirstname = page.locator('#input-firstname');
         this.txtLastname = page.locator('#input-lastname');
@@ -27,6 +32,7 @@ export class RegistrationPage {
         this.chkdPolicy = page.locator('input[name="agree"]');
         this.btnContinue = page.locator('input[value="Continue"]');
         this.msgConfirmation = page.locator('h1:has-text("Your Account Has Been Created!")');
+        this.chkNewsletter = page.locator('input[name="newsletter"][value="1"]');
     }
 
     /**
@@ -85,14 +91,21 @@ export class RegistrationPage {
     }
 
     /**
-     * Clicks the Continue button
+     * Subscribes to newsletter by checking the newsletter checkbox
+     */
+    async subscribeNewsletter(): Promise<void> {
+        await this.chkNewsletter.check();
+    }
+
+    /**
+     * Clicks the Continue button to submit registration
      */
     async clickContinue(): Promise<void> {
         await this.btnContinue.click();
     }
 
     /**
-     * Gets the confirmation message text
+     * Gets the confirmation message text after successful registration
      * @returns Promise<string> - Confirmation message text
      */
     async getConfirmationMsg(): Promise<string> {
@@ -100,8 +113,22 @@ export class RegistrationPage {
     }
 
     /**
-     * Complete registration workflow
+     * Checks if the registration confirmation message is visible
+     * @returns Promise<boolean>
+     */
+    async isRegistrationSuccessful(): Promise<boolean> {
+        try {
+            await expect(this.msgConfirmation).toBeVisible({ timeout: 5000 });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Complete registration workflow using a user data object
      * @param userData - Object containing registration data
+     * @param subscribeNewsletter - Whether to subscribe to newsletter (default: false)
      */
     async completeRegistration(userData: {
         firstName: string;
@@ -109,13 +136,16 @@ export class RegistrationPage {
         email: string;
         telephone: string;
         password: string;
-    }): Promise<void> {
+    }, subscribeNewsletter: boolean = false): Promise<void> {
         await this.setFirstName(userData.firstName);
         await this.setLastName(userData.lastName);
         await this.setEmail(userData.email);
         await this.setTelephone(userData.telephone);
         await this.setPassword(userData.password);
         await this.setConfirmPassword(userData.password);
+        if (subscribeNewsletter) {
+            await this.subscribeNewsletter();
+        }
         await this.setPrivacyPolicy();
         await this.clickContinue();
         await expect(this.msgConfirmation).toBeVisible();
