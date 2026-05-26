@@ -1,85 +1,111 @@
 import { Page, Locator, expect } from '@playwright/test';
-import { ShoppingCartPage } from './ShoppingCartPage'; // Import ShoppingCartPage if needed
 
+/**
+ * ProductPage - Page Object for the OpenCart Product Detail page.
+ * Handles product interactions including add to cart, wishlist, and quantity selection.
+ */
 export class ProductPage {
     private readonly page: Page;
-    
-    // Locators using CSS selectors
-    private readonly txtQuantity: Locator;
+
+    // Locators
+    private readonly txtProductName: Locator;
+    private readonly txtProductPrice: Locator;
     private readonly btnAddToCart: Locator;
-    private readonly cnfMsg: Locator;
-    private readonly btnItems: Locator;
-    private readonly lnkViewCart: Locator;
+    private readonly btnAddToWishList: Locator;
+    private readonly btnAddToCompare: Locator;
+    private readonly txtQuantity: Locator;
+    private readonly lblSuccessAlert: Locator;
+    private readonly lblErrorAlert: Locator;
+    private readonly txtProductDescription: Locator;
 
     constructor(page: Page) {
         this.page = page;
-        
-        // Initialize locators with CSS selectors
-        this.txtQuantity = page.locator('input[name="quantity"]');
+
+        // Initialize locators
+        this.txtProductName = page.locator('#content h1');
+        this.txtProductPrice = page.locator('.price-new, li:has(h2)');
         this.btnAddToCart = page.locator('#button-cart');
-        this.cnfMsg = page.locator('.alert.alert-success.alert-dismissible');
-        this.btnItems = page.locator('#cart');
-        this.lnkViewCart = page.locator('strong:has-text("View Cart")');
+        this.btnAddToWishList = page.locator('button[data-original-title="Add to Wish List"]');
+        this.btnAddToCompare = page.locator('button[data-original-title="Compare this Product"]');
+        this.txtQuantity = page.locator('#input-quantity');
+        this.lblSuccessAlert = page.locator('.alert-success');
+        this.lblErrorAlert = page.locator('.alert-danger');
+        this.txtProductDescription = page.locator('#tab-description');
     }
 
     /**
-     * Sets the product quantity
-     * @param qty - Quantity to set
+     * Gets the product name from the page heading
+     * @returns Promise<string | null>
      */
-    async setQuantity(qty: string): Promise<void> {
-        await this.txtQuantity.fill('');
-        await this.txtQuantity.fill(qty);
+    async getProductName(): Promise<string | null> {
+        return await this.txtProductName.textContent();
     }
 
     /**
-     * Adds product to cart
+     * Clicks the "Add to Cart" button
      */
-    async addToCart(): Promise<void> {
+    async clickAddToCart(): Promise<void> {
         await this.btnAddToCart.click();
     }
 
     /**
-     * Checks if confirmation message is visible
-     * @returns Promise<boolean> - Returns true if message is visible
+     * Clicks the "Add to Wish List" button
      */
-    async isConfirmationMessageVisible(): Promise<boolean> {
+    async clickAddToWishList(): Promise<void> {
+        await this.btnAddToWishList.click();
+    }
+
+    /**
+     * Clicks the "Compare this Product" button
+     */
+    async clickAddToCompare(): Promise<void> {
+        await this.btnAddToCompare.click();
+    }
+
+    /**
+     * Sets the product quantity
+     * @param qty - Quantity to set (as a string)
+     */
+    async setQuantity(qty: string): Promise<void> {
+        await this.txtQuantity.clear();
+        await this.txtQuantity.fill(qty);
+    }
+
+    /**
+     * Gets the success alert message text
+     * @returns Promise<string | null>
+     */
+    async getSuccessMessage(): Promise<string | null> {
+        return await this.lblSuccessAlert.textContent();
+    }
+
+    /**
+     * Checks if a success alert is visible on the page
+     * @returns Promise<boolean>
+     */
+    async isSuccessAlertVisible(): Promise<boolean> {
         try {
-            if(this.cnfMsg!=null){
-                 return true;
-            }
-            else{
-                return false;
-            }//await expect(this.cnfMsg).toBeVisible();
-           
-        } catch (error) {
-            console.log(`Confirmation message not found: ${error}`);
+            await expect(this.lblSuccessAlert).toBeVisible({ timeout: 4000 });
+            return true;
+        } catch {
             return false;
         }
     }
 
     /**
-     * Clicks on Items button to navigate to cart
+     * Gets the error alert message text
+     * @returns Promise<string | null>
      */
-    async clickItemsToNavigateToCart(): Promise<void> {
-        await this.btnItems.click();
+    async getErrorMessage(): Promise<string | null> {
+        return await this.lblErrorAlert.textContent();
     }
 
     /**
-     * Clicks on View Cart link
-     * @returns Promise<ShoppingCartPage> - Returns ShoppingCartPage instance
+     * Adds a product to cart with specified quantity
+     * @param qty - Quantity to add (default: "1")
      */
-    async clickViewCart(): Promise<ShoppingCartPage> {
-        await this.lnkViewCart.click();
-        return new ShoppingCartPage(this.page);
-    }
-
-    /**
-     * Complete workflow to add product to cart
-     * @param quantity - Quantity of product to add
-     */
-    async addProductToCart(quantity: string): Promise<void> {
-        await this.setQuantity(quantity);
-        await this.addToCart();
-        await this.isConfirmationMessageVisible();
+    async addToCart(qty: string = '1'): Promise<void> {
+        await this.setQuantity(qty);
+        await this.clickAddToCart();
     }
 }
