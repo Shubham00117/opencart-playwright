@@ -1,84 +1,102 @@
-import { Page, Locator } from '@playwright/test';
-import { ProductPage } from './ProductPage'; // Import ProductPage if needed
+import { Page, Locator, expect } from '@playwright/test';
 
+/**
+ * SearchResultsPage - Page Object for the OpenCart Search Results page.
+ * Handles product search results and related interactions.
+ */
 export class SearchResultsPage {
     private readonly page: Page;
-    
-    // Locators using CSS selectors
-    private readonly searchPageHeader: Locator;
-    private readonly searchProducts: Locator;
+
+    // Locators
+    private readonly lblResults: Locator;
+    private readonly lstProducts: Locator;
+    private readonly lnkFirstProduct: Locator;
+    private readonly txtNoResults: Locator;
+    private readonly btnListView: Locator;
+    private readonly btnGridView: Locator;
+    private readonly drpSortBy: Locator;
 
     constructor(page: Page) {
         this.page = page;
-        
-        // Initialize locators with CSS selectors
-        this.searchPageHeader = page.locator('#content h1');
-        this.searchProducts = page.locator('h4>a');
-        
+
+        // Initialize locators
+        this.lblResults = page.locator('#content h1');
+        this.lstProducts = page.locator('.product-thumb');
+        this.lnkFirstProduct = page.locator('.product-thumb').first().locator('h4 a');
+        this.txtNoResults = page.locator('.col-sm-12 p:has-text("There is no product")');
+        this.btnListView = page.locator('#list-view');
+        this.btnGridView = page.locator('#grid-view');
+        this.drpSortBy = page.locator('#input-sort');
     }
 
     /**
-     * Verify if the search results page exists by checking the header text
-     * @returns Promise<boolean> - true if the search results page exists
+     * Checks if the search results page is displayed
+     * @returns Promise<boolean>
      */
-    async isSearchResultsPageExists(): Promise<boolean> {
+    async isSearchResultsPageDisplayed(): Promise<boolean> {
         try {
-            const headerText = await this.searchPageHeader.textContent();
-            return headerText?.includes('Search -') ?? false;
-        } catch (error) {
+            await expect(this.page).toHaveURL(/.*route=product\/search.*/);
+            return true;
+        } catch {
             return false;
         }
     }
 
     /**
-     * Check if a product exists in the search results by its name
-     * @param productName - The name of the product to search for
-     * @returns Promise<boolean> - true if the product exists
+     * Gets the number of products shown in search results
+     * @returns Promise<number>
      */
-    async isProductExist(productName: string): Promise<boolean> {
-        try {
-            const count = await this.searchProducts.count();
-            for (let i = 0; i < count; i++) {
-                const product = this.searchProducts.nth(i);
-                 const title = await product.textContent();
-                 if (title === productName) {
-                    return true;
-                }
-            }
-        } catch (error) {
-            console.log(`Error checking product existence: ${error}`);
-        }
-        return false;
+    async getResultCount(): Promise<number> {
+        return await this.lstProducts.count();
     }
 
     /**
-     * Select a product from the search results by its name
-     * @param productName - The name of the product to select
-     * @returns Promise<ProductPage> - ProductPage instance after selecting the product
+     * Checks if "no results" message is shown
+     * @returns Promise<boolean>
      */
-    async selectProduct(productName: string): Promise<ProductPage | null> {
+    async isNoResultsMessageVisible(): Promise<boolean> {
         try {
-            const count = await this.searchProducts.count();
-            for (let i = 0; i < count; i++) {
-                const product = this.searchProducts.nth(i);
-                const title = await product.textContent();
-                if (title === productName) {
-                    await product.click();
-                    return new ProductPage(this.page);
-                }
-            }
-            console.log(`Product not found: ${productName}`);
-        } catch (error) {
-            console.log(`Error selecting product: ${error}`);
+            await expect(this.txtNoResults).toBeVisible({ timeout: 3000 });
+            return true;
+        } catch {
+            return false;
         }
-        return null;
     }
 
     /**
-     * Get count of products in search results
-     * @returns Promise<number> - Number of products found
+     * Clicks on the first product in search results
      */
-    async getProductCount(): Promise<number> {
-        return await this.searchProducts.count();
+    async clickFirstProduct(): Promise<void> {
+        await this.lnkFirstProduct.click();
+    }
+
+    /**
+     * Gets the name of the first product in search results
+     * @returns Promise<string | null>
+     */
+    async getFirstProductName(): Promise<string | null> {
+        return await this.lnkFirstProduct.textContent();
+    }
+
+    /**
+     * Clicks the list view toggle button
+     */
+    async switchToListView(): Promise<void> {
+        await this.btnListView.click();
+    }
+
+    /**
+     * Clicks the grid view toggle button
+     */
+    async switchToGridView(): Promise<void> {
+        await this.btnGridView.click();
+    }
+
+    /**
+     * Selects a sort order from the dropdown
+     * @param sortOption - Sort option label text
+     */
+    async sortResultsBy(sortOption: string): Promise<void> {
+        await this.drpSortBy.selectOption({ label: sortOption });
     }
 }
