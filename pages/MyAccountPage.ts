@@ -1,54 +1,79 @@
 import { Page, Locator, expect } from '@playwright/test';
-import { LogoutPage } from './LogoutPage'; // Import LogoutPage if needed
 
+/**
+ * MyAccountPage - Page Object for the OpenCart My Account dashboard page.
+ * Handles account page verification and navigation to account sub-sections.
+ */
 export class MyAccountPage {
     private readonly page: Page;
-    
-    // Locators using CSS selectors
-    private readonly msgHeading: Locator;
+
+    // Locators
+    private readonly hMyAccount: Locator;
+    private readonly lnkEditAccount: Locator;
+    private readonly lnkChangePassword: Locator;
+    private readonly lnkAddressBook: Locator;
+    private readonly lnkWishList: Locator;
+    private readonly lnkOrderHistory: Locator;
     private readonly lnkLogout: Locator;
 
     constructor(page: Page) {
         this.page = page;
-        
-        // Initialize locators with CSS selectors
-        this.msgHeading = page.locator('h2:has-text("My Account")');
-        this.lnkLogout = page.locator("text='Logout'").nth(1);
+
+        // Initialize locators
+        this.hMyAccount = page.locator('h2:has-text("My Account")');
+        this.lnkEditAccount = page.locator('a:has-text("Edit your account information")');
+        this.lnkChangePassword = page.locator('a:has-text("Change your password")');
+        this.lnkAddressBook = page.locator('a:has-text("Modify your address book entries")');
+        this.lnkWishList = page.locator('a:has-text("Modify your wish list")');
+        this.lnkOrderHistory = page.locator('a:has-text("View your order history")');
+        this.lnkLogout = page.locator('a:has-text("Logout")');
     }
 
     /**
-     * Verifies if My Account page is displayed
-     * @returns Promise<boolean> - Returns true if heading is visible
+     * Checks if the My Account page is displayed after login
+     * @returns Promise<boolean>
      */
     async isMyAccountPageExists(): Promise<boolean> {
         try {
-            const isVisible = await this.msgHeading.isVisible();
-            return isVisible;
-        } catch (error) {
-            console.log(`Error checking My Account page heading visibility: ${error}`);
+            await expect(this.hMyAccount).toBeVisible({ timeout: 5000 });
+            return true;
+        } catch {
             return false;
         }
     }
 
     /**
-     * Clicks on Logout link
-     * @returns Promise<LogoutPage> - Returns instance of LogoutPage
+     * Clicks the "Edit Account Information" link
      */
-    async clickLogout(): Promise<LogoutPage> {
-        try {
-            await this.lnkLogout.click();
-            return new LogoutPage(this.page);
-        } catch (error) {
-            console.log(`Unable to click Logout link: ${error}`);
-            throw error; // Re-throw the error to fail the test
-        }
+    async clickEditAccount(): Promise<void> {
+        await this.lnkEditAccount.click();
     }
 
     /**
-     * Alternative method to return page exists using title
-     * @returns Promise<boolean> - Returns true if page title matches
+     * Clicks the "Change Password" link
      */
-    async getPageTitle(): Promise<string> {
-        return (this.page.title());
+    async clickChangePassword(): Promise<void> {
+        await this.lnkChangePassword.click();
+    }
+
+    /**
+     * Clicks the "Wish List" link
+     */
+    async clickWishList(): Promise<void> {
+        await this.lnkWishList.click();
+    }
+
+    /**
+     * Clicks the "Order History" link
+     */
+    async clickOrderHistory(): Promise<void> {
+        await this.lnkOrderHistory.click();
+    }
+
+    /**
+     * Clicks the "Logout" link from the account page
+     */
+    async clickLogout(): Promise<void> {
+        await this.lnkLogout.click();
     }
 }
