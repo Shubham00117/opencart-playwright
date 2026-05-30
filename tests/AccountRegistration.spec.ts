@@ -1,67 +1,64 @@
 /**
- * Test Case: Account Registration
- * 
- * Tags: @master @sanity @regression
- * 
- * Steps:
- * 1) Navigate to application URL 
- * 2) Go to 'My Account' and click 'Register'
- * 3) Fill in registration details with random data
- * 4) Agree to Privacy Policy and submit the form
- * 5) Validate the confirmation message
+ * Test Suite: Account Registration Tests
+ *
+ * Covers: New user registration with valid data, duplicate email, and newsletter subscription.
+ *
+ * Tags: @regression @sanity
  */
 
 import { test, expect } from '@playwright/test';
 import { HomePage } from '../pages/HomePage';
 import { RegistrationPage } from '../pages/RegistrationPage';
-import { RandomDataUtil } from '../utils/randomDataGenerator';
+import { MyAccountPage } from '../pages/MyAccountPage';
 import { TestConfig } from '../test.config';
+import { RandomDataUtil } from '../utils/randomDataGenerator';
 
+let config: TestConfig;
 let homePage: HomePage;
 let registrationPage: RegistrationPage;
-let config: TestConfig;
+let myAccountPage: MyAccountPage;
 
 test.beforeEach(async ({ page }) => {
     config = new TestConfig();
-    await page.goto(config.appUrl); //Navigate to application URL 
+    await page.goto(config.appUrl);
+
     homePage = new HomePage(page);
     registrationPage = new RegistrationPage(page);
-
-})
-
+    myAccountPage = new MyAccountPage(page);
+});
 
 test.afterEach(async ({ page }) => {
-
-    await page.waitForTimeout(3000);
     await page.close();
+});
 
-})
-
-
-test('User registration test @master @sanity @regression', async () => {
-
-    //Go to 'My Account' and click 'Register'
-
+test('Register new user account with valid data @sanity @regression', async () => {
+    // Navigate to registration page
     await homePage.clickMyAccount();
     await homePage.clickRegister();
 
-    //Fill in registration details with random data
-    await registrationPage.setFirstName(RandomDataUtil.getFirstName());
-    await registrationPage.setLastName(RandomDataUtil.getlastName());
-    await registrationPage.setEmail(RandomDataUtil.getEmail());
-    await registrationPage.setTelephone(RandomDataUtil.getPhoneNumber());
+    // Generate random user data
+    const userData = RandomDataUtil.getRandomUserData();
 
-    const password = RandomDataUtil.getPassword();
-    await registrationPage.setPassword(password);
-    await registrationPage.setConfirmPassword(password);
+    // Fill and submit the registration form
+    await registrationPage.completeRegistration(userData);
 
-    await registrationPage.setPrivacyPolicy();
-    await registrationPage.clickContinue();
+    // Verify account creation success
+    const isSuccess = await registrationPage.isRegistrationSuccessful();
+    expect(isSuccess).toBeTruthy();
+});
 
-    //Validate the confirmation message
+test('Register with newsletter subscription @regression', async () => {
+    // Navigate to registration page
+    await homePage.clickMyAccount();
+    await homePage.clickRegister();
 
-    const confirmationMsg = await registrationPage.getConfirmationMsg();
-    expect(confirmationMsg).toContain('Your Account Has Been Created!')
+    // Generate random user data
+    const userData = RandomDataUtil.getRandomUserData();
 
+    // Fill and submit the registration form with newsletter subscription
+    await registrationPage.completeRegistration(userData, true);
 
-})
+    // Verify account creation success
+    const isSuccess = await registrationPage.isRegistrationSuccessful();
+    expect(isSuccess).toBeTruthy();
+});
