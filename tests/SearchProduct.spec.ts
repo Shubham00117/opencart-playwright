@@ -1,13 +1,9 @@
 /**
- * Test Case: Product Search
- * 
- * Tags: @master @regression
- * 
- * Steps:
- * 1) Navigate to the application URL
- * 2) Enter the product name in the search field
- * 3) Click the search button
- * 4) Verify if the product is displayed in the search results
+ * Test Suite: Product Search Tests
+ *
+ * Covers: Search with valid product name, no-results scenario, and result count verification.
+ *
+ * Tags: @master @sanity @regression
  */
 
 import { test, expect } from '@playwright/test';
@@ -15,37 +11,50 @@ import { HomePage } from '../pages/HomePage';
 import { SearchResultsPage } from '../pages/SearchResultsPage';
 import { TestConfig } from '../test.config';
 
-// Declare reusable variables
 let config: TestConfig;
 let homePage: HomePage;
 let searchResultsPage: SearchResultsPage;
 
-// Playwright hook - runs before each test
 test.beforeEach(async ({ page }) => {
-  config = new TestConfig(); // Load configuration values like URL and product name
-  await page.goto(config.appUrl); // Step 1: Navigate to the application
+    config = new TestConfig();
+    await page.goto(config.appUrl);
 
-  // Initialize page objects
-  homePage = new HomePage(page);
-  searchResultsPage = new SearchResultsPage(page);
+    homePage = new HomePage(page);
+    searchResultsPage = new SearchResultsPage(page);
 });
 
-// Playwright hook - runs after each test (optional cleanup)
 test.afterEach(async ({ page }) => {
-  await page.close(); // Closes the browser tab after test
+    await page.close();
 });
 
-test('Product search test @master @regression', async () => {
-  const productName = config.productName;
+test('Search for existing product returns results @master @sanity @regression', async () => {
+    // Search for a known product
+    await homePage.searchProduct('MacBook');
 
-  // Step 2 & 3: Enter product name and click Search
-  await homePage.enterProductName(productName);
-  await homePage.clickSearch();
+    // Verify results page is displayed
+    const isResultsPageDisplayed = await searchResultsPage.isSearchResultsPageDisplayed();
+    expect(isResultsPageDisplayed).toBeTruthy();
 
-  // Step 4: Verify that the search results page is displayed
-  expect(await searchResultsPage.isSearchResultsPageExists()).toBeTruthy();
+    // Verify at least one product is shown
+    const resultCount = await searchResultsPage.getResultCount();
+    expect(resultCount).toBeGreaterThan(0);
+});
 
-  // Step 5: Validate if the searched product appears in results
-  const isProductFound = await searchResultsPage.isProductExist(productName);
-  expect(isProductFound).toBeTruthy();
+test('Search for non-existing product shows no results message @regression', async () => {
+    // Search for a product that does not exist
+    await homePage.searchProduct('xyznonexistentproduct12345');
+
+    // Verify no results message is visible
+    const isNoResults = await searchResultsPage.isNoResultsMessageVisible();
+    expect(isNoResults).toBeTruthy();
+});
+
+test('Search result shows correct product name @sanity', async () => {
+    // Search for MacBook
+    await homePage.searchProduct('MacBook');
+
+    // Get the first product name
+    const firstName = await searchResultsPage.getFirstProductName();
+    expect(firstName).toBeTruthy();
+    expect(firstName?.toLowerCase()).toContain('macbook');
 });
