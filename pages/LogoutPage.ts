@@ -1,30 +1,59 @@
-import { Page, Locator } from '@playwright/test';
-import { HomePage } from './HomePage';
+import { Page, Locator, expect } from '@playwright/test';
 
+/**
+ * LogoutPage - Page Object for the OpenCart Account Logout page.
+ * Handles verification of successful logout.
+ */
 export class LogoutPage {
     private readonly page: Page;
+
+    // Locators
+    private readonly hLogout: Locator;
     private readonly btnContinue: Locator;
+    private readonly logoutConfirmationText: Locator;
 
     constructor(page: Page) {
         this.page = page;
-        // Using CSS selector with :has-text() pseudo-class for text matching
-        this.btnContinue = page.locator('.btn.btn-primary');
+
+        // Initialize locators
+        this.hLogout = page.locator('#content h1');
+        this.btnContinue = page.locator('a:has-text("Continue")');
+        this.logoutConfirmationText = page.locator('#content p:first-of-type');
     }
 
     /**
-     * Clicks the Continue button after logout
-     * @returns Promise<HomePage> - Returns instance of HomePage
+     * Checks if the logout confirmation page is displayed
+     * @returns Promise<boolean>
      */
-    async clickContinue(): Promise<HomePage> {
+    async isLogoutPageExists(): Promise<boolean> {
+        try {
+            await expect(this.hLogout).toContainText('Account Logout', { timeout: 5000 });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Gets the heading text of the logout page
+     * @returns Promise<string | null>
+     */
+    async getLogoutHeading(): Promise<string | null> {
+        return await this.hLogout.textContent();
+    }
+
+    /**
+     * Clicks the Continue button to return to home page after logout
+     */
+    async clickContinue(): Promise<void> {
         await this.btnContinue.click();
-        return new HomePage(this.page);
     }
 
     /**
-     * Verifies if the Continue button is visible
-     * @returns Promise<boolean> - Returns true if button is visible
+     * Gets the confirmation message text on the logout page
+     * @returns Promise<string | null>
      */
-    async isContinueButtonVisible(): Promise<boolean> {
-        return await this.btnContinue.isVisible();
+    async getConfirmationMessage(): Promise<string | null> {
+        return await this.logoutConfirmationText.textContent();
     }
 }
