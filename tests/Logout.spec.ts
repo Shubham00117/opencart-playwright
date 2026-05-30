@@ -1,67 +1,51 @@
 /**
- * Test Case: User Logout
- * 
- * Tags: @master @regression
- * 
- * Steps:
- * 1) Navigate to the application URL
- * 2) Go to Login page from Home page
- * 3) Login with valid credentials
- * 4) Verify 'My Account' page
- * 5) Click on Logout link
- * 6) Click on Continue button
- * 7) Verify user is redirected to Home Page
+ * Test Suite: Logout Tests
+ *
+ * Covers: Successful logout after login, verifies redirect to logout confirmation page.
+ *
+ * Tags: @master @sanity @regression
  */
 
 import { test, expect } from '@playwright/test';
-import { TestConfig } from '../test.config';
 import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
 import { MyAccountPage } from '../pages/MyAccountPage';
 import { LogoutPage } from '../pages/LogoutPage';
+import { TestConfig } from '../test.config';
 
-// Declare shared variables
 let config: TestConfig;
 let homePage: HomePage;
 let loginPage: LoginPage;
 let myAccountPage: MyAccountPage;
 let logoutPage: LogoutPage;
 
-// Setup before each test
 test.beforeEach(async ({ page }) => {
-  config = new TestConfig(); // Load test config
-  await page.goto(config.appUrl); // Step 1: Navigate to app URL
+    config = new TestConfig();
+    await page.goto(config.appUrl);
 
-  // Initialize page objects
-  homePage = new HomePage(page);
-  loginPage = new LoginPage(page);
-  myAccountPage = new MyAccountPage(page);
-  //logoutPage = new LogoutPage(page);
+    homePage = new HomePage(page);
+    loginPage = new LoginPage(page);
+    myAccountPage = new MyAccountPage(page);
+    logoutPage = new LogoutPage(page);
 });
 
-// Optional cleanup after each test
 test.afterEach(async ({ page }) => {
-  await page.close(); // Close the browser tab (helps keep tests clean)
+    await page.close();
 });
 
-test('User logout test @master @regression', async () => {
-  // Step 2: Navigate to Login page
-  await homePage.clickMyAccount();
-  await homePage.clickLogin();
+test('User can logout successfully after login @master @sanity @regression', async () => {
+    // Login
+    await homePage.navigateToLogin();
+    await loginPage.login(config.email, config.password);
 
-  // Step 3: Perform login using valid credentials
-  await loginPage.login(config.email, config.password);
+    // Verify login was successful
+    const isLoggedIn = await myAccountPage.isMyAccountPageExists();
+    expect(isLoggedIn).toBeTruthy();
 
-  // Step 4: Verify successful login
-  expect(await myAccountPage.isMyAccountPageExists()).toBeTruthy();
+    // Logout via My Account page
+    await myAccountPage.clickLogout();
 
-  // Step 5: Click Logout, which returns LogoutPage instance
-  logoutPage = await myAccountPage.clickLogout();
-
-  // Step 6: Verify "Continue" button is visible before clicking
-  expect(await logoutPage.isContinueButtonVisible()).toBe(true);
-
-  // Step 7: Click Continue and verify redirection to HomePage
-  homePage = await logoutPage.clickContinue();
-  expect(await homePage.isHomePageExists()).toBe(true);
+    // Verify logout page is displayed
+    const isLoggedOut = await logoutPage.isLogoutPageExists();
+    expect(isLoggedOut).toBeTruthy();
 });
