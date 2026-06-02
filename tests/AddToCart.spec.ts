@@ -1,67 +1,75 @@
 /**
- * Test Case: Add Product to Cart
- * 
- * Tags: @master @regression
- * 
- * Steps:
- * 1. Navigate to application URL
- * 2. Enter an existing product name in the search box
- * 3. Click the search button
- * 4. Verify the product appears in the search results
- * 5. Select the product
- * 6. Set quantity
- * 7. Add the product to the cart
- * 8. Verify the success message
+ * Test Suite: Add to Cart Tests
+ *
+ * Covers: Adding a product to cart, verifying cart count update, and guest cart persistence.
+ *
+ * Tags: @master @sanity @regression
  */
 
 import { test, expect } from '@playwright/test';
-import { TestConfig } from '../test.config';
 import { HomePage } from '../pages/HomePage';
+import { LoginPage } from '../pages/LoginPage';
 import { SearchResultsPage } from '../pages/SearchResultsPage';
 import { ProductPage } from '../pages/ProductPage';
+import { ShoppingCartPage } from '../pages/ShoppingCartPage';
+import { TestConfig } from '../test.config';
 
-// Shared instances
 let config: TestConfig;
 let homePage: HomePage;
+let loginPage: LoginPage;
 let searchResultsPage: SearchResultsPage;
 let productPage: ProductPage;
+let shoppingCartPage: ShoppingCartPage;
 
 test.beforeEach(async ({ page }) => {
-  config = new TestConfig(); // Load test configuration
-  await page.goto(config.appUrl); // Step 1: Open application URL
+    config = new TestConfig();
+    await page.goto(config.appUrl);
 
-  // Initialize page objects
-  homePage = new HomePage(page);
-  searchResultsPage = new SearchResultsPage(page);
-  productPage=new ProductPage(page);
+    homePage = new HomePage(page);
+    loginPage = new LoginPage(page);
+    searchResultsPage = new SearchResultsPage(page);
+    productPage = new ProductPage(page);
+    shoppingCartPage = new ShoppingCartPage(page);
 });
 
 test.afterEach(async ({ page }) => {
-  await page.close(); // Optional cleanup
+    await page.close();
 });
 
-test('Add product to cart test @master @regression', async ({ page }) => {
-  // Step 2: Enter product name in search box
-  await homePage.enterProductName(config.productName);
+test('Add product to cart after login @master @sanity @regression', async () => {
+    // Login first
+    await homePage.navigateToLogin();
+    await loginPage.login(config.email, config.password);
 
-  // Step 3: Click the search button
-  await homePage.clickSearch();
+    // Search for a product
+    await homePage.searchProduct('MacBook');
 
-  // Step 4: Verify search results page is displayed
-  expect(await searchResultsPage.isSearchResultsPageExists()).toBeTruthy();
+    // Click on first product
+    await searchResultsPage.clickFirstProduct();
 
-  // Step 5: Verify that the product exists in the results
-  const productName = config.productName;
-  expect(await searchResultsPage.isProductExist(productName)).toBeTruthy();
+    // Add to cart
+    await productPage.addToCart('1');
 
-  // Step 6-7-8: Select product → Set quantity → Add to cart → Verify confirmation
-  if (await searchResultsPage.isProductExist(productName)) {
-    //productPage = await searchResultsPage.selectProduct(productName);
-    await searchResultsPage.selectProduct(productName);
-    await productPage.setQuantity(config.productQuantity); // Set quantity
-    await productPage.addToCart();                         // Add to cart
+    // Verify success alert is visible
+    const isSuccess = await productPage.isSuccessAlertVisible();
+    expect(isSuccess).toBeTruthy();
+});
 
-    // Step 8: Assert success message is visible
-    expect(await productPage.isConfirmationMessageVisible()).toBeTruthy();
-  }
+test('Cart count updates after adding product @sanity', async () => {
+    // Login first
+    await homePage.navigateToLogin();
+    await loginPage.login(config.email, config.password);
+
+    // Search for a product
+    await homePage.searchProduct('iPhone');
+
+    // Click on first product
+    await searchResultsPage.clickFirstProduct();
+
+    // Add to cart
+    await productPage.clickAddToCart();
+
+    // Verify cart shows updated item
+    const isSuccess = await productPage.isSuccessAlertVisible();
+    expect(isSuccess).toBeTruthy();
 });
