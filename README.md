@@ -194,3 +194,18 @@ This project contains a GitHub Actions workflow `.github/workflows/playwright.ym
 
 ---
 *Happy Automating! 🤖✨*
+
+---
+
+## 📋 Test Coverage Summary
+
+| Module        | Page Object | Test Spec | Status |
+|---------------|------------|-----------|--------|
+| Registration  | ✅          | ✅         | Done   |
+| Login         | ✅          | ✅         | Done   |
+| Logout        | ✅          | ✅         | Done   |
+| Search        | ✅          | ✅         | Done   |
+| Product       | ✅          | ✅         | Done   |
+| Cart          | ✅          | ✅         | Done   |
+| Checkout      | ✅          | ✅         | Done   |
+| Wishlist      | ✅          | ✅         | Done   |
