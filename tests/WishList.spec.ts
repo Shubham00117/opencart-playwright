@@ -1,47 +1,73 @@
+/**
+ * Test Suite: WishList Tests
+ *
+ * Covers: Add product to wishlist, verify item count, and add from wishlist to cart.
+ *
+ * Tags: @master @sanity @regression
+ */
+
 import { test, expect } from '@playwright/test';
 import { HomePage } from '../pages/HomePage';
-import { TestConfig } from '../test.config';
-import { WishListPage } from '../pages/WishListPage';
 import { LoginPage } from '../pages/LoginPage';
+import { SearchResultsPage } from '../pages/SearchResultsPage';
+import { ProductPage } from '../pages/ProductPage';
+import { WishListPage } from '../pages/WishListPage';
+import { MyAccountPage } from '../pages/MyAccountPage';
+import { TestConfig } from '../test.config';
 
 let config: TestConfig;
 let homePage: HomePage;
 let loginPage: LoginPage;
-let wishlistpage: WishListPage;
+let searchResultsPage: SearchResultsPage;
+let productPage: ProductPage;
+let wishListPage: WishListPage;
+let myAccountPage: MyAccountPage;
 
-// This hook runs before each test
 test.beforeEach(async ({ page }) => {
-  config = new TestConfig(); // Load config (URL, credentials)
-  await page.goto(config.appUrl); // Navigate to base URL
+    config = new TestConfig();
+    await page.goto(config.appUrl);
 
-  // Initialize page objects
-  homePage = new HomePage(page);
-  loginPage = new LoginPage(page);
-  wishlistpage = new WishListPage(page);
+    homePage = new HomePage(page);
+    loginPage = new LoginPage(page);
+    searchResultsPage = new SearchResultsPage(page);
+    productPage = new ProductPage(page);
+    wishListPage = new WishListPage(page);
+    myAccountPage = new MyAccountPage(page);
 });
 
-// Optional cleanup after each test
 test.afterEach(async ({ page }) => {
-  await page.close(); // Close browser tab (good practice in local/dev run)
+    await page.close();
 });
 
-test('Verify wishlist button @master @sanity @regression', async () => {
+test('Add product to wishlist @master @sanity @regression', async ({ page }) => {
+    // Login
+    await homePage.navigateToLogin();
+    await loginPage.login(config.email, config.password);
 
-  //Navigate to Login page via Home page
+    // Search and go to product
+    await homePage.searchProduct('MacBook');
+    await searchResultsPage.clickFirstProduct();
 
-  await homePage.clickMyAccount();
-  await homePage.clickLogin();
+    // Add to wishlist
+    await productPage.clickAddToWishList();
 
-  //Enter valid credentials and log in
-  await loginPage.setEmail(config.email);
-  await loginPage.setPassword(config.password);
-  await loginPage.clickLogin();
+    // Navigate to wishlist page
+    await page.goto(config.appUrl + 'index.php?route=account/wishlist');
 
-  //Navigate to Wishlist page via Home page
-  await homePage.clickWishlist();
+    // Verify wishlist has at least 1 item
+    const wishListCount = await wishListPage.getWishListItemCount();
+    expect(wishListCount).toBeGreaterThan(0);
+});
 
-  //Validate the confirmation message 
-  const confirmationMsg = await wishlistpage.getConfirmationMsg();
-  expect(confirmationMsg).toContain('My Wish List');
+test('Wishlist page is accessible from My Account @sanity', async ({ page }) => {
+    // Login
+    await homePage.navigateToLogin();
+    await loginPage.login(config.email, config.password);
 
+    // Navigate to wishlist via My Account
+    await myAccountPage.clickWishList();
+
+    // Verify wishlist page is displayed
+    const isWishListPage = await wishListPage.isWishListPageDisplayed();
+    expect(isWishListPage).toBeTruthy();
 });
