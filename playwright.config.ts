@@ -1,48 +1,64 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * Playwright Configuration for OpenCart E2E Test Suite.
+ * @see https://playwright.dev/docs/test-configuration
+ */
 export default defineConfig({
-  timeout: 30 * 1000,   //30000 ms(30 secs)
-  testDir: './tests',
-  fullyParallel: true,
-  //retries: process.env.CI ? 2 : 0,
-  retries:1,
-  //workers: process.env.CI ? 1 : undefined,
-  workers: 1,
+    // Directory where test files are located
+    testDir: './tests',
 
-  reporter: [
-    ['html'],
-    ['allure-playwright'],
-    //['dot'],
-    ['list']
-  ],
+    // Run tests in parallel (disable to run sequentially)
+    fullyParallel: false,
 
-  use: {
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    //headless: false,
-    viewport: { width: 1280, height: 720 }, // Set default viewport size for consistency
-    ignoreHTTPSErrors: true, // Ignore SSL errors if necessary
-    permissions: ['geolocation'], // Set necessary permissions for geolocation-based tests
-  },
+    // Retry failed tests in CI environments
+    retries: process.env.CI ? 2 : 0,
 
-  //grep: /@master/,
+    // Use a single worker to avoid parallel conflicts on OpenCart
+    workers: 1,
 
-  projects: [
-   {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+    // Maximum time a single test can run
+    timeout: 60000,
+
+    // Reporter configuration
+    reporter: [
+        ['html', { outputFolder: 'playwright-report', open: 'never' }],
+        ['list'],
+        ['allure-playwright'],
+    ],
+
+    use: {
+        // Base URL for the application under test
+        baseURL: 'https://demo.opencart.com/',
+
+        // Collect traces on test failures for debugging
+        trace: 'on-first-retry',
+
+        // Capture screenshots on failure
+        screenshot: 'only-on-failure',
+
+        // Capture video on first retry
+        video: 'on-first-retry',
+
+        // Ignore HTTPS errors
+        ignoreHTTPSErrors: true,
+
+        // Default action timeout
+        actionTimeout: 15000,
+
+        // Default navigation timeout
+        navigationTimeout: 30000,
     },
-    /*{
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
 
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    } */
-  ],
-
-
+    // Define test projects for different browsers
+    projects: [
+        {
+            name: 'chromium',
+            use: { ...devices['Desktop Chrome'] },
+        },
+        {
+            name: 'firefox',
+            use: { ...devices['Desktop Firefox'] },
+        },
+    ],
 });
